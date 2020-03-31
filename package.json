@@ -1,0 +1,22 @@
+{
+  "name": "chess-bot-vk",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/5ur3/chess-bot-vk.git",
+  "author": "5ur3 <an30.work@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^3.8.3"
+  },
+  "scripts": {
+    "r": "ts-node src/index.ts",
+    "ru": "ts-node-dev --respawn src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@types/node": "^12.12.31",
+    "ts-node": "^8.8.1",
+    "ts-node-dev": "^1.0.0-pre.44"
+  }
+}
