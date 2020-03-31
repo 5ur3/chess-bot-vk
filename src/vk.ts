@@ -25,7 +25,7 @@ export default class API {
 
     let response = await ((async (): Promise<object> => {
       return new Promise((resolve, reject) => {
-        let req = https.request(options, (message: IncomingMessage) => {
+        https.request(options, (message: IncomingMessage) => {
           message.on('data', (buffer: Buffer) => {
             let response = JSON.parse(buffer.toString())
             resolve(response)
