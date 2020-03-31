@@ -17,7 +17,7 @@ export default class Sessions {
     let payload = attachments['payload']
     if (!this.exists(id))
       this.create(id)
-    else if (payload && JSON.parse(payload) && JSON.parse(payload).command)
-      this.sessions[id].onCommandReceived(JSON.parse(payload).command)
+    const command = payload && JSON.parse(payload) && JSON.parse(payload).command ? JSON.parse(payload).command : ''
+    this.sessions[id].onCommandReceived(command)
   }
 }

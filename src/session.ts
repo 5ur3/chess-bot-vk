@@ -11,7 +11,7 @@ export default class Session {
   send: (message: string, keyboard: string) => any
   private enqueue: () => void
   private unqueue: () => void
-  private white = true
+  private enqueued = false
   id: number = 0
   firstName: string
   lastName: string
@@ -28,7 +28,6 @@ export default class Session {
     this.send = send
     this.enqueue = enqueue.bind(this, this)
     this.unqueue = unqueue.bind(this, this)
-    this.send('Выберите действие:', Keyboard.create([[{ label: 'Найти соперника', command: findEnemy }]]))
   }
 
   copy = () => {
@@ -43,12 +42,14 @@ export default class Session {
     return session
   }
   onFindEnemy = () => {
-    this.send('Поиск противника...', Keyboard.create([[{ label: 'Остановить поиск', command: stopFindingEnemy }]]))
+    this.enqueued = true
     this.enqueue()
+    this.onGameUpdated()
   }
   onStopFindingEnemy = () => {
+    this.enqueued = false
     this.unqueue()
-    this.send('Выберите действие:', Keyboard.create([[{ label: 'Найти соперника', command: findEnemy }]]))
+    this.onGameUpdated()
   }
   onEndGame = () =>
     this.send(`Завершение игры:`, Keyboard.create([[{ label: 'Отмена', command: cancelEndingGame }, { label: 'Ничья', command: offerDraw, color: 'negative' }, { label: 'Сдаться', command: surrender, color: 'negative' }]]))
@@ -285,17 +286,27 @@ export default class Session {
       this.onDirectionChosen(command.substring(2))
     else if (command.substring(0, 2) == 'to')
       this.onDestinationChosen(parseInt(command.substring(2, 3)), parseInt(command.substring(3, 4)))
+    else
+      this.onGameUpdated()
   }
 
   onGameUpdated = () => {
+    if (!this.board) {
+      if (!this.enqueued)
+        this.send('Выберите действие:', Keyboard.create([[{ label: 'Найти соперника', command: findEnemy }]]))
+      else
+        this.send('Поиск противника...', Keyboard.create([[{ label: 'Остановить поиск', command: stopFindingEnemy }]]))
+      return
+    }
     if (this.board.isGameEnded()) {
       if (this.board.isGameTied())
-        this.send(`${this.board.getUpdatesAndDeck(this)}\nИгра закончена\nНичья`, Keyboard.create([[{ label: 'Найти соперника', command: findEnemy }]]))
+        this.send(`${this.board.getUpdatesAndDeck(this)}\nИгра закончена\nНичья`, '')
       else if (this.board.amIWinner(this))
-        this.send(`${this.board.getUpdatesAndDeck(this)}\nИгра закончена\nПобеда!${this.board.getEndReason() == EndReason.surrender ? ' (Противник сдался)' : ''}`, Keyboard.create([[{ label: 'Найти соперника', command: findEnemy }]]))
+        this.send(`${this.board.getUpdatesAndDeck(this)}\nИгра закончена\nПобеда!${this.board.getEndReason() == EndReason.surrender ? ' (Противник сдался)' : ''}`, '')
       else
-        this.send(`${this.board.getUpdatesAndDeck(this)}\nИгра закончена\nПоражение`, Keyboard.create([[{ label: 'Найти соперника', command: findEnemy }]]))
-
+        this.send(`${this.board.getUpdatesAndDeck(this)}\nИгра закончена\nПоражение`, '')
+      this.board = null
+      this.onGameUpdated()
       return
     }
     if (this.board.isDrawOffered()) {
@@ -334,7 +345,7 @@ export default class Session {
 
   onGameStarted = (board: Board) => {
     this.board = board
-    this.white = this.board.amIWhite(this)
+    this.enqueued = false
     this.send(`Игра найдена!\nВаш противник: @id${this.board.getEnemyId(this)}(${this.board.getEnemyName(this)})`, Keyboard.create([]))
   }
 }
